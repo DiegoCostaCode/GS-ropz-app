@@ -26,8 +26,10 @@ export default function Cep() {
             email,
             telefone,
             senha,
-            cep: cep
+            cep
         }
+
+        console.log(usuarioAuth);
 
         await axios.post('http://192.168.1.72:8080/usuario/api/', usuarioAuth, {
             headers: {
@@ -39,8 +41,6 @@ export default function Cep() {
             const usuario = usuarioResponse(response.data);
 
             Alert.alert('Uhuul!', 'Deu certo, criamos seu cadastro.😺');
-
-            console.log('Usuário cadastrado com sucesso:', usuario.id);
 
             expo.push({
                 pathname: '/login',

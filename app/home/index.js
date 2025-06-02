@@ -7,6 +7,8 @@ import Colors from '../../theme/colors';
 import axios from 'axios';
 import forecastResponse from '../types/forecastResponse';
 import temperaturasResponse from '../types/temperaturasResponse';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 
 export default function Home() {
 
@@ -18,52 +20,52 @@ export default function Home() {
     const [relatorioPrevisao, setRelatorioPrevisao] = useState(null);
 
 
-    useEffect(() => {
-        const fetchData = async () => {
-            
+    useFocusEffect(
+        useCallback(() => {
+            const fetchData = async () => {
+            setIsLoading(true); // importante: mostra o loading sempre que voltar à tela
+
             const idLocalizacao = await AsyncStorage.getItem('userLocalId');
             const token = await AsyncStorage.getItem('userToken');
 
             const header = {
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
                 },
-                validateStatus: () => true //DISCLAIMER: Isso é usado para evitar que o Axios lance um erro para códigos de status HTTP,
-                //  já que posso fazer algumas requisições e elas serem 404 de NotFound.
+                validateStatus: () => true
             };
 
             const retries = 10;
-            const delay = 3000;
+            const delay = 2000;
 
             console.log(`Tentando obter dados climáticos para o local de ID: ${idLocalizacao}`);
 
             for (let i = 0; i < retries; i++) {
-
                 console.log(`Tentativa ${i + 1} de ${retries}...`);
 
                 const reportCurrentRes = await axios.get(
-                    `http://192.168.1.72:8080/relatorio/api/temperaturas/current/${idLocalizacao}`,
-                    header
+                `http://192.168.1.72:8080/relatorio/api/temperaturas/current/${idLocalizacao}`,
+                header
                 );
                 const reportForecastRes = await axios.get(
-                    `http://192.168.1.72:8080/relatorio/api/temperatura/forecast/${idLocalizacao}`,
-                    header
+                `http://192.168.1.72:8080/relatorio/api/temperatura/forecast/${idLocalizacao}`,
+                header
                 );
 
                 const currentData = temperaturasResponse(reportCurrentRes.data);
                 const forecastData = forecastResponse(reportForecastRes.data);
 
                 if (
-                    reportCurrentRes.status === 200 &&
-                    reportForecastRes.status === 200 &&
-                    currentData.length > 0 &&
-                    forecastData != null
+                reportCurrentRes.status === 200 &&
+                reportForecastRes.status === 200 &&
+                currentData.length > 0 &&
+                forecastData != null
                 ) {
-                    console.log('Dados válidos recebidos!');
-                    setRelatorioAtual(currentData);
-                    setRelatorioPrevisao(forecastData);
-                    break;
+                console.log('Dados válidos recebidos!');
+                setRelatorioAtual(currentData);
+                setRelatorioPrevisao(forecastData);
+                break;
                 }
 
                 console.log(`Tentativa ${i + 1} falhou, tentando novamente em ${delay}ms...`);
@@ -71,10 +73,11 @@ export default function Home() {
             }
 
             setIsLoading(false);
-        };
+            };
 
-        fetchData();
-    }, []);
+            fetchData();
+        }, [])
+    );
 
     if (isLoading) {
         return (
@@ -106,7 +109,7 @@ export default function Home() {
                             color={Colors.black}
                             size={20}
                         />
-                        <Text>{relatorioPrevisao.temperatura.localizacao.cidade} , {relatorioPrevisao.temperatura.localizacao.estado}</Text>
+                        <Text>{relatorioPrevisao.temperatura.localizacao.cidade} , {relatorioPrevisao.temperatura.localizacao.estado} - {relatorioPrevisao.temperatura.localizacao.cep}</Text>
                     </View>
 
                     <View style={styles.coodernates}>

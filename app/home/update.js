@@ -8,7 +8,7 @@ import {usuarioResponse, usuarioRequest} from '../types/usuarioResponse';
 import { formatTel, formatCep} from '../utils/cadastroFunctions';
 
 export default function Update() {
-
+    
     const expo = useRouter();
 
     const [nome, setNome] = useState('');
@@ -108,8 +108,19 @@ export default function Update() {
             if (usuarioDTO !== null){
 
                 axios.put(`http://192.168.1.72:8080/usuario/api/${id}`, usuarioDTO, header)
-                .then(() => {
-                    expo.push('/home');
+                .then(async ( response ) => {
+
+                    console.log('Usuário atualizado com sucesso:', response.data);
+
+                    const usuario = usuarioResponse(response.data);
+
+                    await AsyncStorage.removeItem('userLocalId');
+                    await AsyncStorage.setItem('userLocalId', usuario.localizacao.id.toString());
+                    
+                    await axios.get(`http://192.168.1.72:8080/temperatura/api/current/${usuario.localizacao.id}`, header);
+                    await axios.get(`http://192.168.1.72:8080/temperatura/api/forecast/${usuario.localizacao.id}`, header);
+
+                    expo.push('/home')
                     Alert.alert('Uhuul!!', 'Dados atualizado com sucesso!!. 🍃😸');
                 })
                 .catch((error) => {

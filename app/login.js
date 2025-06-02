@@ -7,7 +7,6 @@ import Colors from "../theme/colors";
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import axios from 'axios';
 
-
 export default function Login() {
     const expo = useRouter();
 
@@ -39,7 +38,7 @@ export default function Login() {
             return;
         }
 
-        await axios.post('https://java-gs-app.azurewebsites.net/:8080/api/login', loginAuth, {
+        await axios.post('http://192.168.1.72:8080/api/login', loginAuth, {
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -59,9 +58,8 @@ export default function Login() {
                 }
             }
 
-            await axios.get(`https://java-gs-app.azurewebsites.net/temperatura/api/current/${response.data.usuario.localizacao.id}`, header);
-
-            await axios.get(`https://java-gs-app.azurewebsites.net/temperatura/api/forecast/${response.data.usuario.localizacao.id}`, header);
+            await axios.get(`http://192.168.1.72:8080/temperatura/api/current/${response.data.usuario.localizacao.id}`, header);
+            await axios.get(`http://192.168.1.72:8080/temperatura/api/forecast/${response.data.usuario.localizacao.id}`, header);
 
             expo.push({
                 pathname: '/home'
@@ -73,7 +71,7 @@ export default function Login() {
             console.log('Erro ao fazer login:', error.message);
 
             if (error.status == 401) {
-                Alert.alert('Iih!', 'Senha incorreta!😿');
+                Alert.alert('Iiiih!', 'Senha incorreta!😿');
             } if (error.status == 400){
                 Alert.alert('Ops!', 'Essa conta não existe em nosso sistema! 😿');
             } if (error.status == 500) {
