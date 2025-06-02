@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image } from "react-native";
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, Alert } from "react-native";
 import { useRouter } from 'expo-router';
 import Colors from "../theme/colors";
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { formatTel } from './utils/cadastroFunctions';
+
 
 export default function Cadastro() {
     const expo = useRouter();
@@ -12,22 +14,12 @@ export default function Cadastro() {
     const [telefone, setTelefone] = useState('');
     const [senha, setSenha] = useState('');
 
-    const formatTel = (telefone) => {
-        let numeros = telefone.replace(/\D/g, '');
-
-        numeros = numeros.slice(0, 11);
-
-        if (numeros.length <= 2) {
-            return `(${numeros}`;
-        } else if (numeros.length <= 7) {
-            return `(${numeros.slice(0, 2)}) ${numeros.slice(2)}`;
-        } else if (numeros.length <= 11) {
-            return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(7)}`;
-        }
-        return telefone;
-    };
-
     const submit = () => {
+
+        if (!nome || !email || !telefone || !senha) {
+            Alert.alert('Ops!', 'Você esqueceu de preencher um campo...😿');
+            return;
+        }
 
         expo.push({
             pathname: '/cep',
@@ -62,7 +54,7 @@ export default function Cadastro() {
 
                 <View style={styles.inputContainer}>
                     <Text style={styles.label}>Telefone</Text>
-                    <TextInput style={styles.input} keyboardType="phone-pad" value={telefone} placeholder="(00) 0000-0000" onChangeText={text => setTelefone(formatTel(text))}/>
+                    <TextInput style={styles.input} keyboardType="phone-pad" maxLength={15} value={telefone} placeholder="(00) 0000-0000" onChangeText={text => setTelefone(formatTel(text))}/>
                 </View>
 
                 <View style={styles.inputContainer}>

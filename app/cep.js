@@ -1,15 +1,65 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image } from "react-native";
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, Alert } from "react-native";
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Colors from "../theme/colors";
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import axios from 'axios';
+import { usuarioResponse } from './types/usuarioResponse';
+import { formatCep } from './utils/cadastroFunctions';
 
-// -> http://localhost:8080/usuario/api/
 
 export default function Cep() {
     const expo = useRouter();
 
-    const { nome } = useLocalSearchParams(); 
+    const { nome, email, telefone, senha } = useLocalSearchParams();
+    const [cep, setCep] = useState('');
+
+    const submit = async () => {
+    
+        if (!nome || !email || !telefone || !senha || !cep) {
+            Alert.alert('Ops!', 'Você esqueceu de preencher um campo...😿');
+            return;
+        }
+
+        const usuarioAuth = {
+            nome,
+            email,
+            telefone,
+            senha,
+            cep: cep
+        }
+
+        await axios.post('http://192.168.1.72:8080/usuario/api/', usuarioAuth, {
+            headers: {
+            'Content-Type': 'application/json',
+            },  
+        })
+        .then(async (response) => {
+
+            const usuario = usuarioResponse(response.data);
+
+            Alert.alert('Uhuul!', 'Deu certo, criamos seu cadastro.😺');
+
+            console.log('Usuário cadastrado com sucesso:', usuario.id);
+
+            expo.push({
+                pathname: '/login',
+                params: { email: usuario.email }
+            });
+
+        }).catch((error) => {
+
+            console.log('Erro ao fazer login:', error);
+
+            if(error.status === 400) {
+                Alert.alert('Ops!', 'Você já possui um cadastro com esse e-mail.😿');
+            } if (error.status === 500 && error.response.data.message.includes('key violation')) {
+                Alert.alert('Ops!', 'Já existe um usuário com este e-mail! 😿');
+            } else {
+                Alert.alert('Ops!', 'Ocorreu um erro ao cadastrar seu usuário. Tente novamente mais tarde. 😿');
+            }
+        })
+    };
 
     return (
 
@@ -19,14 +69,21 @@ export default function Cep() {
                 <Image style={styles.logo} source={require('../assets/ropz-logo-gray.png')} />
 
                 <Text style={styles.title}>Woow!!</Text>
-                <Text style={styles.sub}>É um prazer tê-lo aqui, {nome} 💘👋.</Text>
-                <Text style={styles.description}>Precisamos de uma info importante agora, seu CEP.</Text>
+                <Text style={styles.importantText}>É um prazer tê-lo aqui, {nome} 💘👋.</Text>
+                <Text style={styles.description}>Precisamos de uma info importante agora, seu <Text style={styles.importantText}>CEP.</Text></Text>
                 
                 <View style={styles.inputContainer}>
-                    <TextInput style={styles.input} placeholder="01234-567" />
+                    <TextInput
+                        style={styles.input}
+                        maxLength={9}
+                        keyboardType='numeric'
+                        placeholder="01234-567"
+                        value={cep}
+                        onChangeText={text => setCep(formatCep(text))}
+                        />
                 </View>
 
-                <TouchableOpacity style={styles.nxtButton} onPress={ () => expo.push('/home')}>
+                <TouchableOpacity style={styles.nxtButton} onPress={ () => submit()}>
                     <Ionicons name="arrow-forward" size={24} color="white" />
                 </TouchableOpacity>
             </View>
@@ -64,7 +121,7 @@ const styles = StyleSheet.create({
         color: Colors.black,
         width: '100%',
     },
-    sub: {
+    importantText: {
         fontSize: 17,
         textAlign: 'left',
         fontWeight: 'bold',

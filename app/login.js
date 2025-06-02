@@ -1,20 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image } from "react-native";
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, Alert } from "react-native";
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { usuarioAuth } from './types/usuarioResponse';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Colors from "../theme/colors";
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import axios from 'axios';
 
-// -> http://localhost:8080/usuario/api/
 
 export default function Login() {
     const expo = useRouter();
 
-    const { emailCadastrado, senhaCadastrada } = useLocalSearchParams();
+    const { email } = useLocalSearchParams();
+    const [emailInput, setEmail] = useState('');
+    const [senhaInput, setSenha] = useState('');
 
     const catchCredenciais = () => {
-        if (emailCadastrado && senhaCadastrada) {
-            setEmail(emailCadastrado);
-            setSenha(senhaCadastrada);
+        if (email) {
+            setEmail(email);
         }
     };
 
@@ -22,10 +25,65 @@ export default function Login() {
         catchCredenciais();
     }, []);
 
-    const [email, setEmail] = useState('');
-    const [telefone, setTelefone] = useState('');
-    const [senha, setSenha] = useState('');
+    const login = async () => {
 
+        console.log('Enviando dados de login...');
+
+        const loginAuth = usuarioAuth({
+            email: emailInput,
+            senha: senhaInput
+        })
+        
+        if (loginAuth == null) {
+            Alert.alert('Ops!', 'Você esqueceu de preencher um campo...😿');
+            return;
+        }
+
+        await axios.post('https://java-gs-app.azurewebsites.net/:8080/api/login', loginAuth, {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        }).then(async (response) => {
+            console.log('Usuário encontrado!');
+
+            const token = response.data.token;
+
+            await AsyncStorage.setItem('userId', response.data.usuario.id.toString());
+            await AsyncStorage.setItem('userToken', response.data.token);
+            await AsyncStorage.setItem('userLocalId', response.data.usuario.localizacao.id.toString());
+
+            header = {
+                headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+                }
+            }
+
+            await axios.get(`https://java-gs-app.azurewebsites.net/temperatura/api/current/${response.data.usuario.localizacao.id}`, header);
+
+            await axios.get(`https://java-gs-app.azurewebsites.net/temperatura/api/forecast/${response.data.usuario.localizacao.id}`, header);
+
+            expo.push({
+                pathname: '/home'
+            });
+
+
+        }).catch((error) => {
+
+            console.log('Erro ao fazer login:', error.message);
+
+            if (error.status == 401) {
+                Alert.alert('Iih!', 'Senha incorreta!😿');
+            } if (error.status == 400){
+                Alert.alert('Ops!', 'Essa conta não existe em nosso sistema! 😿');
+            } if (error.status == 500) {
+                Alert.alert('Ops!', 'Estamos com uma instabilidade, tente novamente daqui alguns segundos!!😿');
+            }
+        });
+
+    };
+
+    
     return (
 
         <View style={styles.container}>
@@ -36,14 +94,14 @@ export default function Login() {
                 <Text style={styles.description}>Vamos lá, escreva o seu...🔐</Text>
                 
                 <View style={styles.inputContainer}>
-                    <TextInput style={styles.input} placeholder="calor@gmail.com" value={senha} onChangeText={setEmail}/>
+                    <TextInput style={styles.input} placeholder="calor@gmail.com" value={emailInput} onChangeText={setEmail}/>
                 </View>
 
                 <View style={styles.inputContainer}>
-                    <TextInput style={styles.input} placeholder="Senha super secreta" value={senha} onChangeText={setSenha} secureTextEntry />
+                    <TextInput style={styles.input} placeholder="Senha super secreta" value={senhaInput} onChangeText={setSenha} secureTextEntry />
                 </View>
 
-                <TouchableOpacity style={styles.nxtButton} onPress={ () => expo.push('/home')}>
+                <TouchableOpacity style={styles.nxtButton} onPress={login}>
                     <Ionicons name="arrow-forward" size={24} color="white" />
                 </TouchableOpacity>
             </View>
