@@ -38,6 +38,7 @@ export default function Home() {
 
             const retries = 10;
             const delay = 2000;
+            let success = false;
 
             console.log(`Tentando obter dados climáticos para o local de ID: ${idLocalizacao}`);
 
@@ -57,19 +58,28 @@ export default function Home() {
                 const forecastData = forecastResponse(reportForecastRes.data);
 
                 if (
-                reportCurrentRes.status === 200 &&
-                reportForecastRes.status === 200 &&
-                currentData.length > 0 &&
-                forecastData != null
+                    reportCurrentRes.status === 200 &&
+                    reportForecastRes.status === 200 &&
+                    currentData.length > 0 &&
+                    forecastData != null
                 ) {
-                console.log('Dados válidos recebidos!');
-                setRelatorioAtual(currentData);
-                setRelatorioPrevisao(forecastData);
-                break;
+                    console.log('Dados válidos recebidos!');
+                    setRelatorioAtual(currentData);
+                    setRelatorioPrevisao(forecastData);
+                    success = true;
+                    break;
                 }
 
                 console.log(`Tentativa ${i + 1} falhou, tentando novamente em ${delay}ms...`);
                 await new Promise(resolve => setTimeout(resolve, delay));
+            }
+
+            if( !success) {
+                Alert.alert(
+                    'Oopps!',
+                    'Pedimos desculpas, não conseguimos obter os dados climáticos no momento. Tenta daqui a pouco, pode ser?🙀'
+                );
+                expo.push('/login');
             }
 
             setIsLoading(false);
@@ -153,6 +163,7 @@ export default function Home() {
                                     source={{ uri: relatorioPrevisao.temperatura.icon }}
                                     style={{ width: 25, height: 25, borderRadius: 5, backgroundColor: Colors.aqua }}
                                 />
+                                <Text style={styles.infoText}> {relatorioPrevisao.temperatura.temperaturaMaxima.toFixed(1)}°C</Text>
                              </View>
                     </View>
 
@@ -176,7 +187,7 @@ export default function Home() {
                         
                         <View style={styles.tempStatuSection}>
                             <View style={styles.iconAndLabel}>
-                                <Image style={styles.weatherIconG} source={{ uri: 'https://openweathermap.org/img/wn/03d@2x.png' }} />
+                                <Image style={styles.weatherIconG} source={{ uri: relatorioAtual[0].temperatura.icon }} />
                                 <Text style={styles.title}>{relatorioAtual[0].temperatura.descricao}</Text>
                             </View>
                             <View style={styles.actualTemp}>
@@ -200,7 +211,7 @@ export default function Home() {
                             </View>
                             <View style={styles.info}>
                                 <Text style={styles.importantText}>Umidade</Text>
-                                <Text style={styles.infoText}> {relatorioAtual[0].temperatura.umidade.toFixed(1)} m/s</Text>
+                                <Text style={styles.infoText}> {relatorioAtual[0].temperatura.umidade.toFixed(0)}%</Text>
                             </View>
                         </View>
                         
@@ -240,6 +251,7 @@ export default function Home() {
                         }}>
                             <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                             <Text style={{ color: Colors.black, fontWeight: 'bold' }}>{item.dataHora}</Text>
+                            <Text style={{ color: Colors.black }}> {item.temperatura.temperaturaMaxima.toFixed(1)}°C</Text>
                             <Image
                                 source={{ uri: item.temperatura.icon }}
                                 style={{ width: 25, height: 25, borderRadius: 5, backgroundColor: Colors.aqua }}
