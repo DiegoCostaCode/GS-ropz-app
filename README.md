@@ -5,6 +5,9 @@
 - Lucas Minozzo Bronzeri | RM553745
 - Thais Ribeiro Asfur | RM553870
 
+## Objetivo
+O aplicativo se compromete em ser fácil uso, rápido para consurmir/entender informações. Praticidade, segunrança e informação.
+
 ## Problema
 Com o avanço das mudanças climáticas, eventos de calor extremo
 tornaram-se mais frequentes e intensos, impactando diretamente a
