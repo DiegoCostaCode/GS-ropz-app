@@ -37,7 +37,7 @@ export default function Home() {
             };
 
             const retries = 10;
-            const delay = 2000;
+            const delay = 3000;
             let success = false;
 
             console.log(`Tentando obter dados climáticos para o local de ID: ${idLocalizacao}`);
